@@ -1,32 +1,39 @@
 import { ProductModel } from "../models/productModel.js";
 import { CategoryModel } from "../models/categoryModel.js"; 
+import { addProductValidator } from "../validators/product.js";
 
 // Add a new product
 export const addProduct = async (req, res, next) => {
     try {
-        const { name, price, description, quantity, pictures, categoryName } = req.body;
+        const { error, value } = addProductValidator.validate({
+            ...req.body,
+            pictures: req.files?.map(file => file.filename)
+        });
 
-        // Ensure category is a valid ObjectId
+        if (error) {
+            return res.status(422).json({ message: "Validation failed", details: error.details });
+        }
+
+        const { categoryName, ...productData } = value;
+
+        // Corrected: use destructured categoryName
         const category = await CategoryModel.findOne({ name: categoryName });
-if (!category) {
-    return res.status(400).json({ message: "Invalid category name" });
-}
+        if (!category) {
+            return res.status(400).json({ message: "Invalid category name" });
+        }
 
-// Create new product and assign the category to it
-const newProduct = new ProductModel({
-    name,
-    price,
-    description,
-    quantity,
-    pictures,
-    category: category._id  // Store category ID as a reference
-});
-await newProduct.save();
-res.status(201).json(newProduct);  // Return the newly created product
-} catch (err) {
-next(err);  // Pass error to error handling middleware
-}
+        const newProduct = await ProductModel.create({
+            ...productData,
+            category: category._id,
+            userId: req.auth.id
+        });
+
+        res.status(201).json(newProduct);
+    } catch (error) {
+        next(error);
+    }
 };
+
 
 
 
@@ -67,6 +74,11 @@ export const getProducts = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getProduct = async(req, res, next) => {
+    const product = await ProductModel.findById(req.params.id)
+    res.status(200).json({"single product": product})
+}
 
 
 // Update a product by ID

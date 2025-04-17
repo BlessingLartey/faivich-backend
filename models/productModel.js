@@ -16,6 +16,9 @@ const productSchema = new Schema({
         type: String,
         required: true
     },
+    desDetail: {
+        type: String
+    },
     quantity: {
         type: Number,
         required: true
