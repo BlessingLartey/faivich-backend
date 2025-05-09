@@ -16,6 +16,14 @@ const productSchema = new Schema({
         type: String,
         required: true
     },
+    ingredients: {
+        type: String,
+        required: true
+    },
+   usage: {
+    type: String,
+    required: true
+   },
     desDetail: {
         type: String
     },

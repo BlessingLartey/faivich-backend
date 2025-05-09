@@ -1,22 +1,57 @@
 import { OrderModel } from "../models/orderModel.js";
 
 export const createOrder = async (req, res, next) => {
-    try {
-      const { product, quantity, address } = req.body;
-  
-      const order = await OrderModel.create({
-        product,
-        user: req.auth.id, //using isAuthenticated middleware
-        quantity,
-        address
-      });
-  
-      res.status(201).json(order);
-    } catch (err) {
-        res.status(500).json({ message: 'Error creating order', error: err.message });
-        ;
-    }
-  };
+  try {
+    const {
+      product,
+      quantity,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      fullAddress,
+      country,
+      zipCode,
+      city,
+      deliveryMethod,
+      paymentMethod,
+      subTotal,
+      discount,
+      deliveryCharge,
+      estimatedTax,
+      totalAmount
+    } = req.body;
+
+    const order = await OrderModel.create({
+      product,
+      user: req.auth.id, // From isAuthenticated middleware
+      quantity,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      fullAddress,
+      country,
+      zipCode,
+      city,
+      deliveryMethod,
+      paymentMethod,
+      subTotal,
+      discount,
+      deliveryCharge,
+      estimatedTax,
+      totalAmount
+    });
+
+    res.status(201).json(order);
+  } catch (err) {
+    res.status(500).json({
+      message: 'Error creating order',
+      error: err.message
+    });
+  }
+};
+
 
 
   export const getAllOrders = async (req, res, next) => {
@@ -69,6 +104,21 @@ export const createOrder = async (req, res, next) => {
       ).populate('product').populate('user');
   
       res.json(order);
+    } catch (err) {
+      next(err);
+    }
+  };
+  
+
+  export const deleteOrder = async (req, res, next) => {
+    try {
+      const deletedOrder = await OrderModel.findByIdAndDelete(req.params.id);
+      
+      if (!deletedOrder) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      res.json({ message: 'Order deleted successfully' });
     } catch (err) {
       next(err);
     }
