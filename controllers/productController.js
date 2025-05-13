@@ -24,7 +24,7 @@ export const addProduct = async (req, res, next) => {
 
         const newProduct = await ProductModel.create({
             ...productData,
-            category: category.name,
+            category: category._id,
             userId: req.auth.id
         });
 
