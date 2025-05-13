@@ -41,3 +41,12 @@ export const productPicturesUpload = multer({
     })
 });
 
+export const profilePicturesUpload = multer({
+    storage: new CloudinaryStorage({
+        cloudinary,
+        params: {
+            folder: "/faivich-api/profile-pictures"
+        }
+    })
+});
+

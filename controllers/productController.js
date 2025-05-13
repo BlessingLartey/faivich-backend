@@ -24,7 +24,7 @@ export const addProduct = async (req, res, next) => {
 
         const newProduct = await ProductModel.create({
             ...productData,
-            category: category._id,
+            category: category.name,
             userId: req.auth.id
         });
 
@@ -57,7 +57,7 @@ export const getProducts = async (req, res, next) => {
             }
 
             // Update the query to filter products by category ID
-            query.category = category._id;
+            query.category = category.name;
             delete query.categoryName;  // Remove categoryName from query to avoid conflicts
         }
 

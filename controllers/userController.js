@@ -76,19 +76,29 @@ export const loginUser = async (req, res, next) => {
 }
 
 export const updateUser = async (req, res, next) => {
-    //Validate request body
-    const {error, value} = updatedUserValidator.validate(req.body);
-    if (error) {
-        return res.status(422).json(error);
+    try {
+        //Validate request body
+        const {error, value} = updatedUserValidator.validate({...req.body, pictures: req.files?.map(file => file.filename )
+    });
+        if (error) {
+            return res.status(422).json(error);
+        }
+          
+     //Update user in database
+        const user = await UserModel.findByIdAndUpdate(
+            req.params.id,
+            value,
+            {new: true}
+        );
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+          }
+        //return response
+        res.status(200).json({ message: 'user updated successfully!', user})
+    } catch (error) {
+        next(error);
     }
-    //Update user in database
-    const user = await UserModel.findByIdAndUpdate(
-        req.params.id,
-        value,
-        {new: true}
-    );
-    //return response
-    res.status(200).json('user updated successfully!')
 }
 
 export  const getAuthenticatedUser = async(req, res, next) => {
