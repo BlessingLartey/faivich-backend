@@ -1,6 +1,6 @@
 import { ProductModel } from "../models/productModel.js";
 import { CategoryModel } from "../models/categoryModel.js"; 
-import { addProductValidator } from "../validators/product.js";
+import { addProductValidator, updateProductValidator } from "../validators/product.js";
 
 // Add a new product
 export const addProduct = async (req, res, next) => {
@@ -84,34 +84,53 @@ export const getProduct = async(req, res, next) => {
 // Update a product by ID
 export const updateProduct = async (req, res, next) => {
     try {
+        const {error, value} = updateProductValidator.validate({
+            ...req.body,
+            pictures: req.file?.map(file => file.filename) || req.body.pictures
+        });
+
+        if (error) {
+            return res.status(422).json({ message: "validator failed", details: error.details });
+        }
+
         const productId = req.params.id;
-        const { name, price, description, quantity, pictures, category } = req.body;
+        const { categoryName, category, ...updateData } = value;
+
+
+        // Check if product exists
+        const existingProduct = await ProductModel.findById(productId);
+        if (!existingProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
 
         // Validate if the category exists
-        if (category) {
+        if (categoryName) {
+            const categoryDoc = await CategoryModel.findOne({name: categoryName});
+            if (!categoryDoc) {
+                return res.status(400).json({ message: "Invalid category name" });
+            }
+            updateData.category = categoryDoc._id;
+        } else if (category) {
             const categoryDoc = await CategoryModel.findById(category);
             if (!categoryDoc) {
                 return res.status(400).json({ message: "Invalid category ID" });
             }
+            updateData.category = category;
+        }
+
+        // Only proceed if there's something to update
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ message: "No valid fields provided for update" });
         }
 
         // Find the product and update it with the new data
         const updatedProduct = await ProductModel.findByIdAndUpdate(
             productId,
+            updateData,
             {
-                name,
-                price,
-                description,
-                quantity,
-                pictures,
-                category,  // Only update the category if provided
-            },
-            { new: true }  // Return the updated document
-        );
-
-        if (!updatedProduct) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
+                new: true,
+                runValidators: true
+            }).populate('category');
 
         res.status(200).json(updatedProduct);
     } catch (error) {
